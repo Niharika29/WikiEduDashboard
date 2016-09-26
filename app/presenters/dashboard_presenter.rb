@@ -73,7 +73,7 @@ class DashboardPresenter
   end
 
   def default_course_type
-    ENV['default_course_type'] || 'ClassroomProgramCourse'
+    Features.default_course_type
   end
 
   # FIXME: Horrible hack.

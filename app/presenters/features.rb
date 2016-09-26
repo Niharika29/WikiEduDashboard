@@ -28,6 +28,10 @@ class Features
     ENV['open_course_creation'] == 'true'
   end
 
+  def self.default_course_type
+    ENV['default_course_type'] || 'ClassroomProgramCourse'
+  end
+
   def self.enable_legacy_courses?
     ENV['enable_legacy_courses'] == 'true'
   end

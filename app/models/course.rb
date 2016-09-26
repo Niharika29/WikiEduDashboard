@@ -308,9 +308,9 @@ class Course < ActiveRecord::Base
   # use_start_and_end_times is true when the times are user-supplied.
   def set_default_times
     return if use_start_and_end_times
-    self.start = self.start.beginning_of_day
+    self.start = start.beginning_of_day
     self.end = self.end.end_of_day
-    self.timeline_start = self.timeline_start.beginning_of_day
-    self.timeline_end = self.timeline_end.end_of_day
+    self.timeline_start = timeline_start.beginning_of_day
+    self.timeline_end = timeline_end.end_of_day
   end
 end
