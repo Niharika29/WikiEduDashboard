@@ -10,6 +10,10 @@ rescue Errno::ENOENT
 end
 
 describe 'Feature toggles', type: :feature, js: true do
+  before do
+    Capybara.current_driver = :poltergeist
+  end
+
   describe 'hot_loading?' do
     context 'when enabled' do
       before { allow(Features).to receive(:hot_loading?).and_return(true) }
@@ -26,5 +30,9 @@ describe 'Feature toggles', type: :feature, js: true do
         visit root_path if stylesheet_manifest_file_exists?
       end
     end
+  end
+
+  after do
+    Capybara.use_default_driver
   end
 end

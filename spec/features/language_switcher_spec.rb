@@ -2,6 +2,7 @@
 require 'rails_helper'
 
 describe 'language_switcher', type: :feature, js: true do
+  before { Capybara.current_driver = :poltergeist }
   context 'user logged out' do
     it 'should default to English' do
       visit root_path
@@ -52,4 +53,5 @@ describe 'language_switcher', type: :feature, js: true do
       expect(page).to have_text('My Dashboard')
     end
   end
+  after { Capybara.use_default_driver }
 end

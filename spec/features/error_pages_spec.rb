@@ -5,8 +5,9 @@ describe 'error pages' do
   # These steps are necessary to actually load the error pages in rspec.
   # See http://stackoverflow.com/questions/9008520
   before do
+    Capybara.current_driver = :poltergeist
     method = Rails.application.method(:env_config)
-    expect(Rails.application).to receive(:env_config).with(no_args) do
+    allow(Rails.application).to receive(:env_config).with(no_args) do
       method.call.merge(
         'action_dispatch.show_exceptions' => true,
         'action_dispatch.show_detailed_exceptions' => false
@@ -45,5 +46,9 @@ describe 'error pages' do
       expect(page).to have_content 'Incorrect passcode'
       expect(page.status_code).to eq(401)
     end
+  end
+
+  after do
+    Capybara.use_default_driver
   end
 end

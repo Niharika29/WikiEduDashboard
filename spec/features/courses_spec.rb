@@ -9,8 +9,9 @@ module ResetLocale
   end
 end
 
-describe 'the explore page', type: :feature do
+describe 'the explore page', type: :feature, js: true do
   before do
+    Capybara.current_driver = :poltergeist
     cohort = Cohort.first
     cohort_two = create(:cohort_two)
 
@@ -189,5 +190,8 @@ describe 'the explore page', type: :feature do
       expect(response).to have_content '10 Estudiantes'
     end
 =end
+  end
+  after do
+    Capybara.use_default_driver
   end
 end

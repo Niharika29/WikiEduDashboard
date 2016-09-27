@@ -2,6 +2,8 @@
 require 'rails_helper'
 
 describe 'sitenotice', type: :feature do
+  before { Capybara.current_driver = :poltergeist }
+
   before :each do
     ENV['sitenotice'] = notice
   end
@@ -23,4 +25,5 @@ describe 'sitenotice', type: :feature do
       expect(first('.notification')).to be_nil
     end
   end
+  after { Capybara.use_default_driver }
 end

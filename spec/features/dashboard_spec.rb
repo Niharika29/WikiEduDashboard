@@ -2,6 +2,10 @@
 require 'rails_helper'
 
 describe 'dashboard', type: :feature, js: true do
+  before do
+    Capybara.current_driver = :poltergeist
+  end
+
   let(:user) do
     create(:user,
            onboarded: true, real_name: 'test',
@@ -145,5 +149,9 @@ describe 'dashboard', type: :feature, js: true do
       expect(page).to have_content 'Your Courses'
       expect(page).to have_content 'Recent Title'
     end
+  end
+
+  after do
+    Capybara.use_default_driver
   end
 end

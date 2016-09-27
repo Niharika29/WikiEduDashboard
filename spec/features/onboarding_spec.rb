@@ -2,6 +2,8 @@
 require 'rails_helper'
 
 describe 'onboarding', type: :feature, js: true do
+  before { Capybara.current_driver = :poltergeist }
+
   let(:user) { create(:user, onboarded: onboarded, real_name: 'test', email: 'email@email.com') }
 
   describe 'onboarding redirect checks' do
@@ -61,4 +63,6 @@ describe 'onboarding', type: :feature, js: true do
       expect(user.permissions).to eq User::Permissions::INSTRUCTOR
     end
   end
+
+  after { Capybara.use_default_driver }
 end
