@@ -43,6 +43,8 @@ describe 'cloning a course', js: true do
     all('div.DayPicker-Day', text: '11')[0].click
     find('#course_end').click
     all('div.DayPicker-Day', text: '28')[0].click
+    find('#course_end').click
+    all('div.DayPicker-Day', text: '29')[0].click
     find('#timeline_start').click
     all('div.DayPicker-Day', text: '12')[0].click
     find('#timeline_end').click
@@ -50,7 +52,9 @@ describe 'cloning a course', js: true do
     find('attr', text: 'MO').click
     find('attr', text: 'WE').click
     find('input[type="checkbox"]').click
+
     click_button 'Save New Course'
+
     sleep 1
 
     visit "/courses/#{Course.last.slug}"
