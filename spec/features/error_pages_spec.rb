@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 
 describe 'error pages' do
@@ -22,9 +23,10 @@ describe 'error pages' do
     end
   end
 
-  describe 'for non-existent cohorts' do
+  describe 'for non-existent campaigns' do
     it 'describes the 404 problem' do
-      visit '/explore?cohort=not_real'
+      # /campaigns/not_real redirects to overview
+      visit '/campaigns/not_real/overview'
       expect(page).to have_content 'Page not found'
       expect(page.status_code).to eq(404)
     end

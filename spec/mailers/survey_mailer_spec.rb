@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 
 describe SurveyMailer, type: :mailer do
@@ -7,10 +8,10 @@ describe SurveyMailer, type: :mailer do
   let(:courses_user) { create(:courses_user, course_id: course.id, user_id: user.id) }
   let(:survey) { create(:survey) }
   let(:custom_email) do
-    { 'subject' => 'Custom subject',
-      'headline' => 'Custom headline',
-      'body' => "Custom email body\r\nwith multiple\r\nparagraphs",
-      'signature' => '-custom signature' }
+    { subject: 'Custom subject',
+      headline: 'Custom headline',
+      body: "Custom email body\r\nwith multiple\r\nparagraphs",
+      signature: '-custom signature' }
   end
   let(:survey_assignment) do
     create(:survey_assignment, survey_id: survey.id, courses_user_role: role,

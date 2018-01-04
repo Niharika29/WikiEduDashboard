@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #= Presenter for dashboard
 class DashboardPresenter
   include Rails.application.routes.url_helpers
@@ -21,6 +22,14 @@ class DashboardPresenter
 
   def is_admin?
     current_user.permissions == User::Permissions::ADMIN
+  end
+
+  def is_campaign_organizer?
+    campaigns.any?
+  end
+
+  def campaigns
+    current_user.campaigns
   end
 
   # Show the 'Your Courses' label if there are current, submitted courses
@@ -73,12 +82,15 @@ class DashboardPresenter
   end
 
   def default_course_type
-    ENV['default_course_type'] || 'ClassroomProgramCourse'
+    Features.default_course_type
   end
 
-  # FIXME: Horrible hack.
-  def default_course_string_prefix
-    default_course_type.constantize.new.string_prefix
+  def default_use_start_and_end_times
+    default_course_type.constantize.new.use_start_and_end_times
+  end
+
+  def course_string_prefix
+    Features.default_course_string_prefix
   end
 
   private

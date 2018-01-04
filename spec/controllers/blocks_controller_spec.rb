@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 
 describe BlocksController do
@@ -12,7 +13,7 @@ describe BlocksController do
 
     it 'destroys the block' do
       expect(Block.count).to eq(1)
-      delete :destroy, id: block.id, format: :json
+      delete :destroy, params: { id: block.id }, format: :json
       expect(Block.count).to eq(0)
     end
   end

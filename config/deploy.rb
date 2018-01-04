@@ -1,5 +1,5 @@
 # config valid only for current version of Capistrano
-lock '3.6.0'
+lock '3.10.1'
 
 set :application, 'wiki_edu_dashboard'
 set :repo_url, 'git@github.com:WikiEducationFoundation/WikiEduDashboard.git'
@@ -22,7 +22,7 @@ set :ssh_options, forward_agent: true
 # set :log_level, :debug
 
 # Default value for :pty is false
-# set :pty, true
+set :pty, false
 
 # Default value for :linked_files is []
 set :linked_files, fetch(:linked_files, []).push('config/application.yml',
@@ -65,7 +65,10 @@ namespace :deploy do
   desc 'ensure permissions on /tmp'
   task :ensure_tmp_permissions do
     on roles(:all) do
-      execute :chmod, '-R', '777', "#{current_path}/tmp/cache"
+      # Ignore chmod errors and force an exit code of 0, so that Capistrano
+      # continues deployment. This reduces the breakage when there are
+      # permissions problems with the tmp directory.
+      execute "chmod -R 777 #{current_path}/tmp/cache || :"
     end
   end
 

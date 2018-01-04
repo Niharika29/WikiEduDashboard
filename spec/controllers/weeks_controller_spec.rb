@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 
 describe WeeksController do
@@ -12,7 +13,7 @@ describe WeeksController do
 
     it 'destroys the week' do
       expect(Week.count).to eq(1)
-      delete :destroy, id: week.id, format: :json
+      delete :destroy, params: { id: week.id }, format: :json
       expect(Week.count).to eq(0)
     end
   end

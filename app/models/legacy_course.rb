@@ -7,8 +7,8 @@
 #  title                 :string(255)
 #  created_at            :datetime
 #  updated_at            :datetime
-#  start                 :date
-#  end                   :date
+#  start                 :datetime
+#  end                   :datetime
 #  school                :string(255)
 #  term                  :string(255)
 #  character_sum         :integer          default(0)
@@ -22,8 +22,8 @@
 #  description           :text(65535)
 #  submitted             :boolean          default(FALSE)
 #  passcode              :string(255)
-#  timeline_start        :date
-#  timeline_end          :date
+#  timeline_start        :datetime
+#  timeline_end          :datetime
 #  day_exceptions        :string(2000)     default("")
 #  weekdays              :string(255)      default("0000000")
 #  new_article_count     :integer          default(0)
@@ -39,13 +39,21 @@
 #  syllabus_file_size    :integer
 #  syllabus_updated_at   :datetime
 #  home_wiki_id          :integer
+#  recent_revision_count :integer          default(0)
+#  needs_update          :boolean          default(FALSE)
+#  chatroom_id           :string(255)
+#  flags                 :text(65535)
+#  level                 :string(255)
+#  private               :boolean          default(FALSE)
 #
-
-require "#{Rails.root}/lib/legacy_courses/legacy_course_updater"
 
 # Course type for courses imported from the MediaWiki EducationProgram extension
 class LegacyCourse < Course
   def wiki_edits_enabled?
+    false
+  end
+
+  def wiki_course_page_enabled?
     false
   end
 
@@ -55,12 +63,19 @@ class LegacyCourse < Course
     "#{prefix}#{escaped_slug}"
   end
 
-  # Pulls new data from the MediaWiki ListStudents API
-  def update(data={}, should_save=true)
-    LegacyCourseUpdater.update_from_wiki(self, data, should_save)
-  end
-
   def string_prefix
     'courses'
+  end
+
+  def use_start_and_end_times
+    false
+  end
+
+  def multiple_roles_allowed?
+    true
+  end
+
+  def passcode_required?
+    false
   end
 end

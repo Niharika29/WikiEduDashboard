@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module SurveyAssignmentsHelper
   ROLES = [
     {
@@ -30,9 +31,9 @@ module SurveyAssignmentsHelper
                                 selected: selected)
   end
 
-  def email_template_select(f)
+  def email_template_select(f, selected:)
     f.select :email_template,
-             options_for_select(SurveyMailer::TEMPLATES)
+             options_for_select(SurveyMailer::TEMPLATES, selected: selected)
   end
 
   def user_role(survey_assignment, total = 2)

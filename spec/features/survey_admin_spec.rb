@@ -1,24 +1,14 @@
 # frozen_string_literal: true
-require 'rails_helper'
 
-# This lets us switch between Poltergeist and Selenium without changing the spec.
-# Some .click actions don't work on Poltergeist because of overlapping elements,
-# but .trigger('click') is only available in Poltergeist.
-def omniclick(node)
-  if Capybara.current_driver == :poltergeist
-    node.trigger('click')
-  else
-    node.click
-  end
-end
+require 'rails_helper'
 
 describe 'Survey Administration', type: :feature, js: true do
   include Rapidfire::QuestionSpecHelper
   include Rapidfire::AnswerSpecHelper
 
   before do
-    include Devise::TestHelpers, type: :feature
-    Capybara.current_driver = :poltergeist
+    include type: :feature
+    include Devise::TestHelpers
     page.current_window.resize_to(1920, 1080)
   end
 
@@ -32,7 +22,7 @@ describe 'Survey Administration', type: :feature, js: true do
 
     before do
       course = create(:course)
-      course.cohorts << Cohort.last
+      course.campaigns << Campaign.last
       course.courses_users << create(:courses_user, user_id: instructor.id, role: 1)
     end
 
@@ -53,7 +43,7 @@ describe 'Survey Administration', type: :feature, js: true do
       fill_in('question_group_name', with: 'New Question Group')
 
       # FIXME: Fails to find the div with Poltergeist
-      # within('div#question_group_cohort_ids_chosen') do
+      # within('div#question_group_campaign_ids_chosen') do
       #   find('input').set('Spring 2015')
       #   find('input').native.send_keys(:return)
       # end
@@ -117,31 +107,20 @@ describe 'Survey Administration', type: :feature, js: true do
       drag_target = find('#survey_intro')
       drag_source.drag_to(drag_target)
 
-      # Clone a Survey
-      visit '/surveys'
-      click_link 'Clone Survey'
-
       # Clone a Question Group
+      visit '/surveys'
       click_link 'Question Groups'
-      within 'li#question_group_2' do
+      within 'li#question_group_1' do
         click_link 'Clone'
       end
 
       # Delete a Question Group
-      within 'li#question_group_2' do
+      within 'li#question_group_1' do
         click_link 'Edit'
       end
       page.accept_confirm do
         click_link 'Delete Question Group'
       end
-
-      # Destroy a survey
-      visit '/surveys/1/edit'
-      page.accept_confirm do
-        click_link 'Delete this survey'
-      end
-      sleep 1
-      expect(Survey.count).to eq(1)
 
       # Create a SurveyAssignment
       expect(SurveyAssignment.count).to eq(0)
@@ -149,12 +128,18 @@ describe 'Survey Administration', type: :feature, js: true do
       click_link 'New Survey Assignment'
 
       # FIXME: Fails to find the div with Poltergeist
-      # within('div#survey_assignment_cohort_ids_chosen') do
+      # within('div#survey_assignment_campaign_ids_chosen') do
       #   find('input').set('Spring 2015')
       #   find('input').native.send_keys(:return)
       # end
       fill_in('survey_assignment_send_date_days', with: '7')
       check 'survey_assignment_published'
+      fill_in('survey_assignment_custom_email_subject', with: 'My Custom Subject!')
+      fill_in('survey_assignment_custom_email_headline', with: 'My Custom Headline!')
+      fill_in('survey_assignment_custom_email_body', with: 'My Custom Body!')
+      fill_in('survey_assignment_custom_email_signature', with: 'My Custom Signature!')
+      fill_in('survey_assignment_custom_banner_message', with: 'My Custom Banner!')
+
       page.find('input.button').click
       sleep 1
       expect(SurveyAssignment.count).to eq(1)
@@ -164,6 +149,17 @@ describe 'Survey Administration', type: :feature, js: true do
 
       # Update the SurveyAssignment
       click_link 'Edit'
+      expect(page).to have_field('survey_assignment_custom_email_subject',
+                                 with: 'My Custom Subject!')
+      expect(page).to have_field('survey_assignment_custom_email_headline',
+                                 with: 'My Custom Headline!')
+      expect(page).to have_field('survey_assignment_custom_email_body',
+                                 with: 'My Custom Body!')
+      expect(page).to have_field('survey_assignment_custom_email_signature',
+                                 with: 'My Custom Signature!')
+      expect(page).to have_field('survey_assignment_custom_banner_message',
+                                 with: 'My Custom Banner!')
+
       fill_in('survey_assignment_notes', with: 'This is a test.')
       page.find('input.button').click
 
@@ -184,6 +180,14 @@ describe 'Survey Administration', type: :feature, js: true do
       end
       sleep 1
       expect(SurveyAssignment.count).to eq(0)
+
+      # Destroy a survey
+      visit '/surveys/1/edit'
+      page.accept_confirm do
+        click_link 'Delete this survey'
+      end
+      sleep 1
+      expect(Survey.count).to eq(0)
     end
 
     it 'can view survey results' do

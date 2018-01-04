@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 require "#{Rails.root}/lib/surveys/survey_notifications_manager"
 
@@ -22,7 +23,7 @@ describe SurveyNotificationsManager do
         send_before: true,
         send_date_relative_to: 'end'
       )
-      survey_assignment.cohorts << @cohort1
+      survey_assignment.campaigns << @campaign1
       survey_assignment.save
       described_class.create_notifications
       expect(SurveyNotification.all.count).to eq(4)

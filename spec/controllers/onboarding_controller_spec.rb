@@ -1,7 +1,9 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 
 describe OnboardingController do
+  before { stub_list_users_query }
   let(:user) { create(:user, onboarded: onboarded) }
 
   describe 'onboarding route' do
@@ -37,7 +39,8 @@ describe OnboardingController do
     end
 
     it 'should onboard with valid params' do
-      put 'onboard', real_name: 'Name', email: 'email@email.org', instructor: false
+      params = { real_name: 'Name', email: 'email@email.org', instructor: false }
+      put 'onboard', params: params
       expect(response.status).to eq(204)
       expect(user.reload.onboarded).to eq(true)
       expect(user.real_name).to eq('Name')
@@ -45,16 +48,22 @@ describe OnboardingController do
     end
 
     it 'should not onboard with invalid params' do
-      expect { put 'onboard', real_name: 'Name', email: 'email@email.org' }
+      expect { put 'onboard', params: { real_name: 'Name', email: 'email@email.org' } }
         .to raise_error ActionController::ParameterMissing
     end
 
     it 'should remain an admin regardless of instructor param' do
       user.update_attributes(permissions: User::Permissions::ADMIN, onboarded: false)
-      put 'onboard', real_name: 'Name', email: 'email@email.org', instructor: true
+      put 'onboard', params: { real_name: 'Name', email: 'email@email.org', instructor: true }
       expect(response.status).to eq(204)
       expect(user.reload.onboarded).to eq(true)
       expect(user.permissions).to eq(User::Permissions::ADMIN)
+    end
+
+    it 'should strip name field of excessive whitespace' do
+      params = { real_name: " Name  \n Surname ", email: 'email@email.org', instructor: false }
+      put 'onboard', params: params
+      expect(user.real_name).to eq('Name Surname')
     end
   end
 end

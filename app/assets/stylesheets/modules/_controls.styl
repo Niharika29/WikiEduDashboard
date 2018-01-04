@@ -15,6 +15,10 @@
 
 // Button
 
+// ensures inline display of a button with a div that contains another button
+.inline-button-peer
+  display inline-block
+
 .button, input.button
   background-color mercury
   border 1px solid zircon
@@ -31,9 +35,13 @@
   font-weight 600
   text-decoration none
 
+  &.stacked
+    margin-top 10px
+
   &:hover
     background-color white
     border-bottom 1px solid zircon
+    color body-color
 
   &.disabled,
   &:disabled
@@ -41,7 +49,7 @@
     opacity 0.5
     pointer-events none
 
-  & + &, select + & 
+  & + &, select + &
     margin-left 10px
 
   &.ghost-button
@@ -112,6 +120,9 @@
     padding 0px
     text-align center
     width 25px
+
+  &.assign-button
+    margin-left 5px !important
 
   &.right
     float right
@@ -203,3 +214,9 @@ tr.students .button.plus
 .sidebar__course-actions span
   font-size 15px
   color body-color
+
+@media only screen and (max-width: 500px)
+// Button
+  .button, input.button
+    padding 4px 3px 4px
+    font-size 10px

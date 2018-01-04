@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "#{Rails.root}/lib/word_count"
 
 #= Utilities for calcuating statistics for course activity
@@ -34,7 +35,7 @@ class CourseStatistics
       global_usages: @usage_count
     }
 
-    report = { @opts[:cohort].to_sym => report } if @opts[:cohort]
+    report = { @opts[:campaign].to_sym => report } if @opts[:campaign]
     report
   end
 

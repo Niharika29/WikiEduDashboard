@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #= Controller for user functionality
 class LookupsController < ApplicationController
   include CourseHelper
@@ -6,11 +7,11 @@ class LookupsController < ApplicationController
   before_action :require_permissions
   respond_to :json
 
-  # Used to generate list of existing cohorts for pulldown
-  def cohort
-    @model = 'cohort'
+  # Used to generate list of existing campaigns for pulldown
+  def campaign
+    @model = 'campaign'
     @key = 'title'
-    @values = Cohort.all.pluck(:title)
+    @values = Campaign.all.order(created_at: :desc).pluck(:title)
     render 'index'
   end
 

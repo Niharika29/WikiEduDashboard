@@ -1,6 +1,8 @@
 # Messages for Armenian (Հայերեն)
 # Exported from translatewiki.net
 # Export driver: phpyaml
+# Author: Aram1985
+# Author: Kareyac
 # Author: KeepingCalm
 # Author: Lilitik22
 # Author: Vahe Gharakhanyan
@@ -20,12 +22,13 @@ hy:
     log_out: Դուրս գալ համակարգից
     my_dashboard: Իմ կառավարման էջ
     recent_activity: Վերջին ակտիվություն
-    search: փնտրել ask.wikiedu.org
+    search: հարց ուղղել
     sign_up_extended: Գրանցվել Վիքիպեդիայով
     sign_up_log_in_extended: Վիքիպեդիայով
     sign_up: Գրանցվել
     submit: Հաստատել
     training: Ուսուցում
+    change: փոխել
   dashboard:
     create_note: Սեղմեք Ստեղծել Դասընթաց, որպեսզի ստեղծեք ձեր առաջին դասընթացը։
     explore_course_pages: Ուսումնասիրել դասընթացների էջերը
@@ -47,32 +50,70 @@ hy:
     assigned_to: Հանձնարարված
     edited: Խմբագրված հոդվածներ
     edited_mobile: Հոդվածներ
+    hide: Թաքցնել
     label: Հոդվածներ
     loading: Բեռնվում են հոդվածները
+    new: (նոր)
+    rating: Դաս
+    rating_docs:
+      b: B-դաս — չափավոր զարգացած հոդված.
+      start: Մեկնարկի դաս — կարճ հոդված է, որը պետք է լրացնել.
+      does_not_exist: Այս հոդվածը գոյություն չունի ՝ Վիքիպեդիայում
+    show_current_version: Ցույց տալ ընթացիկ տարբերակը
     title: Վերնագիր
     title_example: Հոդվածի անվանումը
     view: Դիտել հոդվածը
     view_all: Դիտել բոլորը
+    view_on_wiki: Դիտել Վիքիյում
+    wiki: Վիքի
   assignments:
     already_exists: Այս անվանումով հանձնարարություն արդեն գոյություն ունի։
     assignees: Կատարողներ
     assign_other: Հանձնարարել հոդված
     assign_self: Ինձ հոդված հանձնարարել
-    confirm_deletion: Վստա՞հ ես, որ ցանկանում ես ջնջել այս հանձնարարությունը։
+    confirm_deletion: Դուք համոզված եք, որ ցանկանում եք ջնջել այս նշանակումը?
     label: Հանձնարարել
     loading: Բեռնել հանձնարարությունները
     none_short: Հանձնարարված հոդվածներ չկան
+    remove: Հեռացնել
     reviewers: Վերանայող(ներ)
     review_other: Հանձնարարել վերանայել
     review_self: Վերանայել հոդված
+    select: Ընտրել
+  blocks:
+    milestones:
+      title: Փուլեր
+  campaign:
+    confirm_course_removal: Դուք համոզված եք, որ ցանկանում եք ջնջել "%{title}"  "%{campaign_title}"
+      քարոզարշավից?
+    course_already_removed: '"%{title}" արդեն հեռացվել է %{campaign_title}" քարոզարշավից'
+    course_removed: '"%{title}" հեռացվել է %{campaign_title}" քարոզարշավից'
+    organizers: Կազմակերպիչներ
   courses:
+    activity: Ակտիվություն
+    course_description: Դասընթացներ
+    courses: Դասընթացներ
+    creation_date: Ստեղծման ամսաթիվը
     creator:
+      course_description: Դասընթացի նկարագրությունը
+      create_new: Ստեղծել նոր դասընթացը
+      create_short: Ստեղծել դասընթացը
       end_date: Ավարտելու ամսաթիվ
       expected_number: Ուսանողների ակնկալվող քանակ
       start_date: Սկսելու ամսաթիվ
+    dismiss_survey: Փակել
+    duration: Դասընթացի տեւողությունը
+    enroll: Գրանցվել
+    error:
+      user_exists: Ցավոք, մասնակից %{username} գոյություն չունի ։
     expected_students: Ակնկալվող ուսանողներ
+    instructor:
+      one: Հրահանգիչ
+      other: Հրահանգիչներ
     instructors: Ուսուցիչներ
     join: Միանալ
+    loading: բեռնվում է
+    my_articles: Իմ հոդվածները
     new_week: Ավելացնել Նոր շաբաթ
     school: Դպրոց
     students: Ուսանողներ
@@ -117,10 +158,16 @@ hy:
     user: Մասնակցի անվանատարածք
     user_ns: Մասնակից
   revisions:
+    diff_show: Ցուցադրել
+    diff_hide: Թաքցնել
     edited_by: Խմբագրված
     loading: Բեռնել վերանայումները․․․
     time_doc: Յուրաքանչյուր վերանայման ժամանակը տեղական ժամանակով
     title: Վերնագիր
+    see_more: Տեսնել ավելին
+  suggestions:
+    suggestion_docs:
+      does_not_exist: 'Այս հոդվածը Վիքիպեդիայում գոյություն չունի:'
   training:
     start: Սկսել
     view: Դիտել

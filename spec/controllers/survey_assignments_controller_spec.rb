@@ -1,21 +1,22 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 
 describe SurveyAssignmentsController do
   let(:admin) { create(:admin) }
-  let(:survey)      { create(:survey) }
+  let(:survey) { create(:survey) }
 
   describe '#create' do
     let(:follow_up)   { 7 }
     let(:send_days)   { 7 }
     let(:send_email)  { true }
-    let(:cohort)      { create(:cohort) }
+    let(:campaign)      { create(:campaign) }
     let(:instructor)  { 1 }
     let(:post_params) do
       {
         survey_assignment: {
           survey_id: survey.id,
-          cohort_ids: cohort.id,
+          campaign_ids: campaign.id,
           courses_user_role: instructor,
           send_date_days: send_days,
           send_before: false,
@@ -23,15 +24,20 @@ describe SurveyAssignmentsController do
           follow_up_days_after_first_notification: follow_up,
           published: true,
           notes: 'foo',
-          send_email: send_email
+          send_email: send_email,
+          custom_email_subject: 'bar',
+          custom_email_body: 'baz',
+          custom_email_signature: '',
+          custom_banner_message: 'ohai'
         }
       }
     end
     before { allow(controller).to receive(:current_user).and_return(admin) }
     it 'allows create and sets appropriate params' do
-      post :create, post_params
+      post :create, params: post_params
       expect(SurveyAssignment.last.follow_up_days_after_first_notification).to eq(follow_up)
       expect(SurveyAssignment.last.send_email).to eq(send_email)
+      expect(SurveyAssignment.last.custom_email).to be_a(Hash)
     end
   end
 
@@ -73,7 +79,7 @@ describe SurveyAssignmentsController do
     before { allow(controller).to receive(:current_user).and_return(admin) }
     it 'invokes SurveyTestEmailManager and redirects' do
       expect_any_instance_of(SurveyTestEmailManager).to receive(:send_email)
-      post :send_test_email, params
+      post :send_test_email, params: params
       expect(response.status).to eq(302)
     end
   end

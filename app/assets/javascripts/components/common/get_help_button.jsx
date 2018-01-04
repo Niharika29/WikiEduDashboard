@@ -1,34 +1,40 @@
 import React from 'react';
+import createReactClass from 'create-react-class';
+import PropTypes from 'prop-types';
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
+import * as AlertActions from '../../actions/alert_actions.js';
+
 import Expandable from '../high_order/expandable.jsx';
 import UserStore from '../../stores/user_store.js';
-import AlertsStore from '../../stores/alerts_store.js';
-import AlertActions from '../../actions/alert_actions.js';
 
 const getState = () =>
   ({
     contentExperts: UserStore.getFiltered({ content_expert: true, role: 4 }),
     programManagers: UserStore.getFiltered({ program_manager: true, role: 4 }),
-    alertSubmitting: AlertsStore.getNeedHelpAlertSubmitting(),
-    alertCreated: AlertsStore.getNeedHelpAlertSubmitted()
+    staffUsers: UserStore.getFiltered({ role: 4 })
   })
 ;
 
-const GetHelpButton = React.createClass({
+const GetHelpButton = createReactClass({
   displayName: 'GetHelpButton',
 
   propTypes: {
-    current_user: React.PropTypes.object,
-    course: React.PropTypes.object,
-    open: React.PropTypes.func,
-    is_open: React.PropTypes.bool
+    currentUser: PropTypes.object,
+    course: PropTypes.object,
+    open: PropTypes.func,
+    is_open: PropTypes.bool,
+    alertSubmitting: PropTypes.bool,
+    alertCreated: PropTypes.bool,
+    actions: PropTypes.object
   },
 
-  mixins: [UserStore.mixin, AlertsStore.mixin],
+  mixins: [UserStore.mixin],
 
   getInitialState() {
     const state = getState();
     state.selectedTargetUser = null;
-    state.message = null;
+    state.message = '';
     return state;
   },
 
@@ -54,7 +60,7 @@ const GetHelpButton = React.createClass({
     });
     this.props.open(e);
     setTimeout(() => {
-      AlertActions.resetNeedHelpAlert();
+      this.props.actions.resetNeedHelpAlert();
     }, 500);
   },
 
@@ -79,61 +85,99 @@ const GetHelpButton = React.createClass({
       message: this.state.message,
       course_id: this.props.course.id
     };
-    AlertActions.submitNeedHelpAlert(messageData);
+    this.props.actions.submitNeedHelpAlert(messageData);
+  },
+
+  wikipediaHelpUser() {
+    if (this.state.contentExperts && this.state.contentExperts.length > 0) {
+      return this.state.contentExperts[0];
+    } else if (this.state.programManagers && this.state.programManagers.length > 0) {
+      return this.state.programManagers[0];
+    }
+    return this.state.staffUsers[0];
+  },
+
+  programHelpUser() {
+    if (this.state.programManagers && this.state.programManagers.length > 0) {
+      return this.state.programManagers[0];
+    } else if (this.state.contentExperts && this.state.contentExperts.length > 0) {
+      return this.state.contentExperts[0];
+    }
+    return this.state.staffUsers[0];
+  },
+
+  dashboardHelpUser() {
+    return { username: 'Technical help staff' };
   },
 
   render() {
-    let programManagers;
-    let contentExperts;
-    let targetUsers;
     let content;
     let faqLink;
 
-    contentExperts = this.state.contentExperts.map((user) => {
-      return (
-        <span className="content-experts" key={`${user.username}-content-expert`}>
-          <a href="#" className="content-expert-link" onClick={(e) => this.updateTargetUser(user, e)}>{user.username}</a> (Content Expert)
+    let wikipediaHelpButton;
+    let programHelpButton;
+    let dashboardHelpButton;
+
+    // Only show these contact buttons if there are staff assigned to the course.
+    if (this.state.staffUsers && this.state.staffUsers.length > 0) {
+      // Show the Wikipedia help button to everyone.
+      const wikipediaHelpUser = this.wikipediaHelpUser();
+      wikipediaHelpButton = (
+        <span className="contact-wikipedia-help" key={`${wikipediaHelpUser.username}-wikipedia-help`}>
+          <a href="#" className="wikipedia-help-link button dark small stacked" onClick={(e) => this.updateTargetUser(wikipediaHelpUser, e)}>question about editing Wikipedia</a>
           <br />
         </span>
       );
-    });
 
-    if (this.props.current_user.role > 0) {
-      programManagers = this.state.programManagers.map((user) => {
-        return (
-          <span className="program-managers" key={`${user.username}-program-manager`}>
-            <a href="#" className="program-manager-link" onClick={(e) => this.updateTargetUser(user, e)}>{user.username}</a> (Program Manager)
+      // Show the program help button only to instructors and other non-students.
+      if (this.props.currentUser.role > 0) {
+        const programHelpUser = this.programHelpUser();
+        programHelpButton = (
+          <span className="contact-program-help" key={`${programHelpUser.username}-program-help`}>
+            <a href="#" className="program-help-link button dark stacked small" onClick={(e) => this.updateTargetUser(programHelpUser, e)}>question about Wiki Ed or your assignment</a>
             <br />
           </span>
         );
-      });
-    } else {
-      programManagers = [];
-    }
+      }
 
-    if (programManagers.length > 0 || contentExperts.length > 0) {
-      targetUsers = (
-        <p className="target-users">
-          If you still need help, reach out to the appropriate person:
+      // Show the dashboard help button to everyone.
+      const dashboardHelpUser = this.dashboardHelpUser();
+      dashboardHelpButton = (
+        <span className="contact-dashboard-help" key={`${dashboardHelpUser.username}-dashboard-help`}>
+          <a href="#" className="dashboard-help-link button dark stacked small" onClick={(e) => this.updateTargetUser(dashboardHelpUser, e)}>question about the dashboard</a>
           <br />
-          {contentExperts}
-          {programManagers}
-        </p>
+        </span>
       );
     }
 
-    if (this.state.alertSubmitting) {
+    let contactStaff;
+    if (wikipediaHelpButton || programHelpButton || dashboardHelpButton) {
+      contactStaff = (
+        <div>
+          <hr />
+          <p className="target-users">
+            Still need help? Get in touch with Wiki Ed staff if you have a:
+            <br />
+            {wikipediaHelpButton}
+            {programHelpButton}
+            {dashboardHelpButton}
+          </p>
+        </div>
+      );
+    }
+
+    if (this.props.alertSubmitting) {
       content = (
         <div className="text-center get-help-submitting">
           <strong>Sending message...</strong>
         </div>
       );
-    } else if (this.state.alertCreated) {
+    } else if (this.props.alertCreated) {
       content = (
         <div className="get-help-submitted">
           <p className="text-center"><strong>Message sent!</strong></p>
           <p>
-            We'll get back to you within 1 business day. Be sure to check your email for a response.
+            We&apos;ll get back to you within 1 business day. Be sure to check your email for a response.
           </p>
           <a href="#" className="button" onClick={this.reset}>Ok</a>
         </div>
@@ -147,7 +191,7 @@ const GetHelpButton = React.createClass({
             <fieldset>
               <label htmlFor="message" className="input-wrapper">
                 <span>Your Message:</span>
-                <textarea name="message" className="mb1" onChange={this.updateMessage} defaultValue="" value={this.state.message} />
+                <textarea name="message" className="mb1" onChange={this.updateMessage} value={this.state.message} />
               </label>
             </fieldset>
             <button className="button dark ml0" value="Submit">Send</button>
@@ -156,13 +200,13 @@ const GetHelpButton = React.createClass({
         </div>
       );
     } else {
-      if (this.props.current_user.role > 0) {
+      if (this.props.currentUser.role > 0) {
         faqLink = (
-          <a href="http://ask.wikiedu.org/questions/scope:all/sort:activity-desc/tags:instructorfaq/page:1/" target="blank">FAQ</a>
+          <a className="button dark stacked" href="https://ask.wikiedu.org/questions/scope:all/sort:activity-desc/tags:instructorfaq/page:1/" target="blank">Instructor FAQ</a>
         );
       } else {
         faqLink = (
-          <a href="http://ask.wikiedu.org/questions/scope:all/sort:activity-desc/tags:studentfaq/page:1/" target="blank">FAQ</a>
+          <a className="button dark stacked" href="https://ask.wikiedu.org/questions/scope:all/sort:activity-desc/tags:studentfaq/page:1/" target="blank">Student FAQ</a>
         );
       }
 
@@ -170,7 +214,7 @@ const GetHelpButton = React.createClass({
         <div className="get-help-info">
           <p>
             <strong>
-              Hi, if you need help with your Wikipedia assignment, you've come
+              Hi! if you need help with your Wikipedia assignment, you&apos;ve come
               to the right place!
             </strong>
           </p>
@@ -180,7 +224,7 @@ const GetHelpButton = React.createClass({
             <input name="source" type="hidden" defaultValue="get_help_button" />
             <input type="text" name="q" id="q" defaultValue="" placeholder="Search Help Forum" />
             <button type="submit">
-              <i className="icon icon-search"></i>
+              <i className="icon icon-search" />
             </button>
           </form>
 
@@ -190,11 +234,11 @@ const GetHelpButton = React.createClass({
           </p>
 
           <p>
-            <a href="/training" target="blank">Interactive Training</a><br />
+            <a className="button dark" href="/training" target="blank">Interactive Training</a><br />
             {faqLink}
           </p>
 
-          {targetUsers}
+          {contactStaff}
         </div>
       );
     }
@@ -212,4 +256,13 @@ const GetHelpButton = React.createClass({
   }
 });
 
-export default Expandable(GetHelpButton);
+const mapStateToProps = state => ({
+  alertSubmitting: state.needHelpAlert.submitted,
+  alertCreated: state.needHelpAlert.created
+});
+
+const mapDispatchToProps = dispatch => ({
+  actions: bindActionCreators(AlertActions, dispatch)
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(Expandable(GetHelpButton));

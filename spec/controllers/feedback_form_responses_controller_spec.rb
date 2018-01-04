@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 
 describe FeedbackFormResponsesController do
@@ -13,13 +14,14 @@ describe FeedbackFormResponsesController do
         context 'referer in query params' do
           let(:referer) { 'wikipedia.org' }
           it 'sets referer from params' do
-            get :new, referer: referer
+            get :new, params: { referer: referer }
             expect(assigns(:subject)).to eq(referer)
           end
         end
         context 'referer on request object' do
           let(:referer) { 'bananas.com' }
-          before { allow(request).to receive(:referer).and_return(referer) }
+          # workaround for https://github.com/rspec/rspec-rails/issues/1655
+          before { request.env['HTTP_REFERER'] = referer }
           it 'sets referer from request object' do
             get :new
             expect(assigns(:subject)).to eq(referer)
@@ -70,7 +72,7 @@ describe FeedbackFormResponsesController do
 
     describe 'ivars' do
       it 'sets responses' do
-        get :show, id: form.id
+        get :show, params: { id: form.id }
         expect(assigns(:response)).to be_a FeedbackFormResponse
       end
     end
@@ -98,7 +100,7 @@ describe FeedbackFormResponsesController do
     context 'non-admin' do
       let(:body) { 'bananas' }
       it 'creates successfully' do
-        post :create, feedback_form_response: { body: body }
+        post :create, params: { feedback_form_response: { body: body } }
         expect(FeedbackFormResponse.last.body).to eq(body)
         expect(response.status).to eq(302)
       end

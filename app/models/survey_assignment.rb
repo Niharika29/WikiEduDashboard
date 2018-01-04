@@ -23,13 +23,13 @@
 class SurveyAssignment < ActiveRecord::Base
   has_paper_trail
   belongs_to :survey
-  has_and_belongs_to_many :cohorts
+  has_and_belongs_to_many :campaigns
   has_many :survey_notifications
 
   before_destroy :remove_notifications
 
   scope :published, -> { where(published: true) }
-  scope :by_survey, -> (survey_id) { where(survey_id: survey_id) }
+  scope :by_survey, ->(survey_id) { where(survey_id: survey_id) }
 
   def self.by_courses_user_and_survey(options)
     survey_id, courses_users_id = options.values_at(:survey_id, :courses_users_id)
@@ -41,22 +41,22 @@ class SurveyAssignment < ActiveRecord::Base
   ###########################
   # Custom email attributes #
   ###########################
-  serialize :custom_email
+  serialize :custom_email, Hash
 
   def custom_email_subject
-    custom_email['subject'] if custom_email
+    custom_email[:subject]
   end
 
   def custom_email_headline
-    custom_email['headline'] if custom_email
+    custom_email[:headline]
   end
 
   def custom_email_body
-    custom_email['body'] if custom_email
+    custom_email[:body]
   end
 
   def custom_email_signature
-    custom_email['signature'] if custom_email
+    custom_email[:signature]
   end
 
   ##############################
@@ -64,7 +64,7 @@ class SurveyAssignment < ActiveRecord::Base
   ##############################
   def custom_banner_message
     # This is stored within custom_email for convenience.
-    custom_email['banner_message'] if custom_email
+    custom_email[:banner_message]
   end
 
   ####################
@@ -79,7 +79,7 @@ class SurveyAssignment < ActiveRecord::Base
   end
 
   def total_notifications
-    users = cohorts.collect do |c|
+    users = campaigns.collect do |c|
       c.courses.collect do |course|
         course.courses_users.where(role: courses_user_role)
       end
@@ -95,7 +95,7 @@ class SurveyAssignment < ActiveRecord::Base
   end
 
   def survey
-    Survey.find(survey_id)
+    Survey.find_by_id(survey_id)
   end
 
   def active?
@@ -103,15 +103,15 @@ class SurveyAssignment < ActiveRecord::Base
   end
 
   def courses_users_ready_for_notifications
-    cohorts.collect { |cohort| cohort.courses.ready_for_survey(send_at) }.flatten
+    campaigns.collect { |campaign| campaign.courses.ready_for_survey(send_at) }.flatten
   end
 
   def courses_with_pending_notifications
-    cohorts.collect { |cohort| cohort.courses.will_be_ready_for_survey(send_at) }.flatten
+    campaigns.collect { |campaign| campaign.courses.will_be_ready_for_survey(send_at) }.flatten
   end
 
   def target_courses
-    cohorts.collect(&:courses).flatten
+    campaigns.collect(&:courses).flatten
   end
 
   def target_user_count

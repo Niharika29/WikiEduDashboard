@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: feedback_form_responses
@@ -11,9 +12,12 @@
 #
 
 class FeedbackFormResponse < ActiveRecord::Base
-  def module
-    path = URI.parse(subject).path
-    parts = path.split('/')
-    parts[3]
+  def topic
+    if subject =~ %r{/training/}
+      path = URI.parse(subject).path
+      parts = path.split('/')
+      return parts[3]
+    end
+    subject
   end
 end

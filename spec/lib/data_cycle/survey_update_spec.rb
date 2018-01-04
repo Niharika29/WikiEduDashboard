@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 require "#{Rails.root}/lib/data_cycle/survey_update"
 
@@ -36,6 +37,13 @@ describe SurveyUpdate do
     it "only sends emails for notifications which haven't been dismissed" do
       SurveyUpdate.new
       expect(ActionMailer::Base.deliveries.count).to eq(2)
+    end
+
+    # This doesn't really test the effects of the error handling, but it does exercise it.
+    it 're-raises common SMTP errors if they recur' do
+      allow_any_instance_of(SurveyNotification).to receive(:send_email)
+        .and_raise(Net::SMTPAuthenticationError)
+      expect { SurveyUpdate.new }.to raise_error Net::SMTPAuthenticationError
     end
 
     private

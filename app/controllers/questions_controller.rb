@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class QuestionsController < Rapidfire::ApplicationController
   before_action :set_question
 
@@ -9,7 +10,7 @@ class QuestionsController < Rapidfire::ApplicationController
 
   def update_position
     @question.insert_at(params[:position].to_i)
-    render nothing: true
+    head :ok
   end
 
   def results

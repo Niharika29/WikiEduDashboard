@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 require "#{Rails.root}/lib/course_clone_manager"
 
@@ -14,15 +15,16 @@ describe CourseCloneManager do
            timeline_start: 11.months.ago,
            timeline_end: 9.months.ago,
            slug: 'School/Title_(Term)',
-           passcode: 'code')
-    create(:cohort, id: 1)
-    create(:cohorts_course, course_id: 1, cohort_id: 1)
+           passcode: 'code',
+           flags: { first_flag: 'something' })
+    create(:campaign, id: 1)
+    create(:campaigns_course, course_id: 1, campaign_id: 1)
     create(:user, id: 1)
     create(:courses_user,
            user_id: 1,
            course_id: 1,
            role: CoursesUsers::Roles::INSTRUCTOR_ROLE)
-    create(:user, id: 2)
+    create(:user, id: 2, username: 'user2')
     create(:courses_user,
            user_id: 2,
            course_id: 1,
@@ -31,6 +33,8 @@ describe CourseCloneManager do
     create(:block,
            id: 1, week_id: 1, content: 'First Assignment',
            kind: 1, due_date: 10.months.ago, gradeable_id: 1)
+    create(:week, id: 2, course_id: 1, order: 2)
+    create(:week, id: 3, course_id: 1, order: 3)
     create(:gradeable,
            id: 1, gradeable_item_type: 'block',
            gradeable_item_id: 1, points: 15)
@@ -66,11 +70,12 @@ describe CourseCloneManager do
       expect(clone.timeline_end).not_to eq(original.timeline_end)
     end
 
-    it 'does not carry over cohorts' do
-      expect(clone.cohorts).to be_empty
+    it 'does not carry over campaigns (unless open_course_creation is enabled)' do
+      expect(clone.campaigns).to be_empty
     end
 
     it 'has weeks and block content from original' do
+      expect(clone.weeks.count).to eq(3)
       expect(clone.weeks.first.order).to eq(1)
       expect(clone.weeks.first.blocks.first.content).to eq('First Assignment')
     end
@@ -81,8 +86,9 @@ describe CourseCloneManager do
       expect(clone.weeks.first.blocks.first.due_date).to be_nil
     end
 
-    it 'carries over gradeables' do
+    it 'carries over gradeables as new records' do
       # Gradeables should carry over.
+      expect(clone.weeks.first.blocks.first.gradeable.id).not_to eq(1)
       expect(clone.weeks.first.blocks.first.gradeable.points).to eq(15)
     end
 
@@ -100,6 +106,30 @@ describe CourseCloneManager do
 
     it 'marks the cloned status as PENDING' do
       expect(clone.cloned_status).to eq(Course::ClonedStatus::PENDING)
+    end
+
+    it 'does not carry over the course flags' do
+      expect(clone.flags).to eq({})
+    end
+  end
+
+  context 'when open course creation is enabled' do
+    before do
+      allow(Features).to receive(:open_course_creation?).and_return(true)
+      CourseCloneManager.new(Course.find(1), User.find(1)).clone!
+    end
+
+    it 'carries over campaigns' do
+      expect(clone.campaigns.first.id).to eq(1)
+    end
+  end
+
+  context 'when a course with the same temporary slug already exists' do
+    before { CourseCloneManager.new(Course.find(1), User.find(1)).clone! }
+    it 'returns the existing clone' do
+      existing_clone = Course.last
+      reclone = CourseCloneManager.new(Course.find(1), User.find(1)).clone!
+      expect(reclone).to eq(existing_clone)
     end
   end
 

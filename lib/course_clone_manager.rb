@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #= Procedures for creating a duplicate of an existing course for reuse
 class CourseCloneManager
   def initialize(course, user)
@@ -7,20 +8,26 @@ class CourseCloneManager
   end
 
   def clone!
-    @clone = @course.deep_clone include: [{ weeks:  { blocks: :gradeable } }]
+    @clone = @course.dup
     set_placeholder_start_and_end_dates
     sanitize_clone_info
     update_title_and_slug
+    duplicate_timeline
     clear_meeting_days_and_due_dates
     set_instructor
     tag_course
+    copy_campaigns if Features.open_course_creation?
     return @clone
+  # If a course with the new slug already exists — an incomplete clone of the
+  # same course — then return the previously-created clone.
+  rescue ActiveRecord::RecordNotUnique
+    return Course.find_by(slug: @clone.slug)
   end
 
   private
 
   def set_placeholder_start_and_end_dates
-    # The datepickers require an ititial date, so we set these to today's date
+    # The datepickers require an initial date, so we set these to today's date
     today = Time.zone.today
     @clone.start = today
     @clone.end = today
@@ -34,9 +41,10 @@ class CourseCloneManager
     @clone.slug = course_slug(@clone)
     @clone.passcode = Course.generate_passcode
     @clone.submitted = false
+    @clone.flags = {}
     # If a legacy course is cloned, switch the type to ClassroomProgramCourse.
     @clone.type = 'ClassroomProgramCourse' if @clone.legacy?
-    @clone.save
+    @clone.save!
     @clone = Course.find(@clone.id) # Re-load the course to ensure correct course type
     @clone.update_cache
   end
@@ -48,6 +56,18 @@ class CourseCloneManager
     )
   end
 
+  def duplicate_timeline
+    # Be sure to create them in the correct order, to ensure that Course#order_weeks
+    # does not misorder them on save. deep_clone does not necessarily create records
+    # in the original order, so we clone each week rather than deep_clone the whole
+    # course.
+    @course.weeks.sort_by(&:order).each do |week|
+      clone_week = week.deep_clone include: [{ blocks: :gradeable }]
+      clone_week.course_id = @clone.id
+      clone_week.save!
+    end
+  end
+
   def clear_meeting_days_and_due_dates
     @clone.update_attributes(day_exceptions: '',
                              weekdays: '0000000',
@@ -57,7 +77,12 @@ class CourseCloneManager
   end
 
   def set_instructor
-    CoursesUsers.create!(course_id: @clone.id, user_id: @user.id, role: 1)
+    # Creating a course is analogous to self-enrollment; it is intentional on the
+    # part of the user, so we associate the real name with the course.
+    JoinCourse.new(user: @user,
+                   course: @clone,
+                   role: CoursesUsers::Roles::INSTRUCTOR_ROLE,
+                   real_name: @user.real_name)
   end
 
   TAG_KEYS_TO_CARRY_OVER = ['tricky_topic_areas'].freeze
@@ -68,6 +93,12 @@ class CourseCloneManager
     @course.tags.each do |tag|
       next unless TAG_KEYS_TO_CARRY_OVER.include?(tag.key)
       tag_manager.add(tag: tag.tag, key: tag.key)
+    end
+  end
+
+  def copy_campaigns
+    @course.campaigns.each do |campaign|
+      CampaignsCourses.create(course: @clone, campaign: campaign)
     end
   end
 

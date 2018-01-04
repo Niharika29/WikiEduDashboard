@@ -1,44 +1,37 @@
 import React from 'react';
-import UIStore from '../../stores/ui_store.js';
-import UIActions from '../../actions/ui_actions.js';
+import createReactClass from 'create-react-class';
+import PropTypes from 'prop-types';
+import DiffViewer from '../revisions/diff_viewer.jsx';
 
-const ActivityTableRow = React.createClass({
+const ActivityTableRow = createReactClass({
   displayName: 'ActivityTableRow',
 
   propTypes: {
-    key: React.PropTypes.string,
-    rowId: React.PropTypes.number,
-    diffUrl: React.PropTypes.string,
-    revisionDateTime: React.PropTypes.string,
-    reportUrl: React.PropTypes.string,
-    revisionScore: React.PropTypes.oneOfType([
-      React.PropTypes.string,
-      React.PropTypes.number
+    rowId: PropTypes.number,
+    diffUrl: PropTypes.string,
+    revisionDateTime: PropTypes.string,
+    reportUrl: PropTypes.string,
+    revisionScore: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number
     ]),
-    articleUrl: React.PropTypes.string,
-    talkPageLink: React.PropTypes.string,
-    author: React.PropTypes.string,
-    title: React.PropTypes.string
-  },
-
-  mixins: [UIStore.mixin],
-
-  getInitialState() {
-    return { is_open: false };
-  },
-
-  storeDidChange() {
-    return this.setState({ is_open: UIStore.getOpenKey() === `drawer_${this.props.rowId}` });
+    articleUrl: PropTypes.string,
+    talkPageLink: PropTypes.string,
+    author: PropTypes.string,
+    title: PropTypes.string,
+    revision: PropTypes.object,
+    isOpen: PropTypes.bool,
+    toggleDrawer: PropTypes.func
   },
 
   openDrawer() {
-    return UIActions.open(`drawer_${this.props.rowId}`);
+    return this.props.toggleDrawer(`drawer_${this.props.rowId}`);
   },
 
   render() {
     let revisionDateTime;
     let col2;
-    let className = this.state.is_open ? 'open' : 'closed';
+    const className = this.props.isOpen ? 'open' : 'closed';
 
     if (this.props.diffUrl) {
       revisionDateTime = (
@@ -62,20 +55,25 @@ const ActivityTableRow = React.createClass({
       );
     }
 
+    let diffViewer;
+    if (this.props.revision && this.props.revision.api_url) {
+      diffViewer = <DiffViewer revision={this.props.revision} />;
+    }
+
     return (
-      <tr className={className} onClick={this.openDrawer} key={this.props.key}>
-        <td>
+      <tr className={className} key={this.props.rowId}>
+        <td onClick={this.openDrawer}>
           <a href={this.props.articleUrl}>{this.props.title}</a>
         </td>
         {col2}
-        <td>
+        <td onClick={this.openDrawer}>
           <a href={this.props.talkPageLink}>{this.props.author}</a>
         </td>
-        <td>
+        <td onClick={this.openDrawer}>
           {revisionDateTime}
         </td>
         <td>
-          <button className="icon icon-arrow table-expandable-indicator"></button>
+          {diffViewer}
         </td>
       </tr>
     );

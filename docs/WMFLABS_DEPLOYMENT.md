@@ -15,7 +15,7 @@ ON THE SERVER
 - ssh into this new instance from your machine
 
 - install some additional packages needed by the app and web server
-  - $ `sudo apt-get install libmysqlclient-dev build-essential apache2 apache2-threaded-dev libapr1-dev libaprutil1-dev mysql-server libssl-dev libyaml-dev libreadline-dev openssl curl git-core zlib1g-dev bison libxml2-dev libxslt1-dev libcurl4-openssl-dev libsqlite3-dev sqlite3 pandoc nodejs`
+  - $ `sudo apt-get install libmysqlclient-dev build-essential apache2 apache2-threaded-dev libapr1-dev libaprutil1-dev mysql-server libssl-dev libyaml-dev libreadline-dev openssl curl git-core zlib1g-dev bison libxml2-dev libxslt1-dev libcurl4-openssl-dev libsqlite3-dev sqlite3 pandoc nodejs redis-server imagemagick`
   - Set the mysql server password and record this password. (You'll need it shortly.)
 
 - Create a database for the app
@@ -89,7 +89,7 @@ ON YOUR MACHINE
 - Start the Capistrano deployment (on production). Enter the app's directory, then:
   - $ `cap production deploy`
   - This is expected to fail because configuration files are not yet in place — in particular, application.yml, database.yml, secrets.yml, and newrelic.yml
-   - If it fails but you do't get a message about one of those files, try it again.
+   - If it fails but you don't get a message about one of those files, try it again.
 
 
 ON THE SERVER
@@ -105,6 +105,10 @@ ON THE SERVER
   - Paste the standard file, then save.
   - $ `touch /var/www/dashboard/shared/config/newrelic.yml`
   - (No file content is necessary unless you're using New Relic monitoring.)
+- Create the tmp directory for pid files
+  - $ `mkdir /var/www/dashboard/shared/tmp/pids`
+  - (Sidekiq will create a pid file in this directory upon deployment. If it is unable to do so, background jobs will not be performed.)
+
 
 ON YOUR MACHINE
 -------------
@@ -133,6 +137,6 @@ ON YOUR MACHINE
 
 - Run the capistrano deployment one last time from the app's directory:
   - $ `cap production deploy`
-- Create the cohorts:
-  - $ `cap production sake task=cohort:add_cohorts`
+- Create the campaigns:
+  - $ `cap production sake task=campaign:add_campaigns`
 - Visit your new dashboard!

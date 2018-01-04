@@ -1,19 +1,21 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 
 describe AssignmentsController do
   let!(:course) { create(:course, id: 1) }
   let!(:user) { create(:user) }
   before do
+    stub_wiki_validation
     allow(controller).to receive(:current_user).and_return(user)
   end
 
-  describe 'GET index' do
+  describe 'GET #index' do
     let!(:assignment) { create(:assignment, course_id: 1) }
 
     before do
       allow(Assignment).to receive(:where).and_return(assignment)
-      get :index, course_id: course.slug
+      get :index, params: { course_id: course.slug }
     end
     it 'sets assignments ivar' do
       expect(assigns(:assignments)).to eq(assignment)
@@ -23,7 +25,7 @@ describe AssignmentsController do
     end
   end
 
-  describe 'DELETE destroy' do
+  describe 'DELETE #destroy' do
     context 'when the user owns the assignment' do
       let(:assignment) do
         create(:assignment, course_id: course.id, user_id: user.id,
@@ -39,7 +41,7 @@ describe AssignmentsController do
       context 'when the assignment_id is provided' do
         let(:params) { { course_id: course.slug } }
         before do
-          delete :destroy, { id: assignment.id }.merge(params)
+          delete :destroy, params: { id: assignment.id }.merge(params)
         end
         it 'destroys the assignment' do
           expect(Assignment.count).to eq(0)
@@ -57,7 +59,7 @@ describe AssignmentsController do
             article_title: assignment.article_title, role: assignment.role }
         end
         before do
-          delete :destroy, { id: 'undefined' }.merge(params)
+          delete :destroy, params: { id: 'undefined' }.merge(params)
         end
         # This happens when an assignment is deleted right after it has been created.
         # The version in the AssignmentStore will not have an assignment_id until
@@ -72,7 +74,7 @@ describe AssignmentsController do
       let(:assignment) { create(:assignment, course_id: course.id, user_id: user.id + 1) }
       let(:params) { { course_id: course.slug } }
       before do
-        delete :destroy, { id: assignment }.merge(params)
+        delete :destroy, params: { id: assignment }.merge(params)
       end
 
       it 'does not destroy the assignment' do
@@ -91,7 +93,7 @@ describe AssignmentsController do
           article_title: assignment.article_title, role: assignment.role }
       end
       before do
-        delete :destroy, { id: 'undefined' }.merge(params)
+        delete :destroy, params: { id: 'undefined' }.merge(params)
       end
       # This happens when an assignment is deleted right after it has been created.
       # The version in the AssignmentStore will not have an assignment_id until
@@ -102,7 +104,7 @@ describe AssignmentsController do
     end
   end
 
-  describe '#create' do
+  describe 'POST #create' do
     context 'when the user has permission to create the assignment' do
       let(:course) { create(:course) }
       let(:assignment_params) do
@@ -116,11 +118,13 @@ describe AssignmentsController do
           VCR.use_cassette 'assignment_import' do
             expect_any_instance_of(WikiCourseEdits).to receive(:update_assignments)
             expect_any_instance_of(WikiCourseEdits).to receive(:update_course)
-            put :create, assignment_params
+            put :create, params: assignment_params
             assignment = assigns(:assignment)
             expect(assignment).to be_a_kind_of(Assignment)
             expect(assignment.article.title).to eq('Pizza')
             expect(assignment.article.namespace).to eq(Article::Namespaces::MAINSPACE)
+            expect(assignment.article.rating).not_to be_nil
+            expect(assignment.article.updated_at).not_to be_nil
           end
         end
       end
@@ -137,10 +141,58 @@ describe AssignmentsController do
           VCR.use_cassette 'assignment_import' do
             expect_any_instance_of(WikiCourseEdits).to receive(:update_assignments)
             expect_any_instance_of(WikiCourseEdits).to receive(:update_course)
-            put :create, wiktionary_params
+            put :create, params: wiktionary_params
             assignment = assigns(:assignment)
             expect(assignment).to be_a_kind_of(Assignment)
             expect(assignment.article.title).to eq('selfie')
+            expect(assignment.article.namespace).to eq(Article::Namespaces::MAINSPACE)
+          end
+        end
+      end
+
+      context 'when the assignment is for Wikisource' do
+        let!(:www_wikisource) { create(:wiki, language: 'www', project: 'wikisource') }
+        let(:wikisource_params) do
+          { user_id: user.id, course_id: course.slug, title: 'Heyder Cansa', role: 0,
+            language: 'www', project: 'wikisource' }
+        end
+
+        before do
+          expect(Article.find_by(title: 'Heyder Cansa')).to be_nil
+        end
+
+        it 'imports the article' do
+          VCR.use_cassette 'assignment_import' do
+            expect_any_instance_of(WikiCourseEdits).to receive(:update_assignments)
+            expect_any_instance_of(WikiCourseEdits).to receive(:update_course)
+            put :create, params: wikisource_params
+            assignment = assigns(:assignment)
+            expect(assignment).to be_a_kind_of(Assignment)
+            expect(assignment.article.title).to eq('Heyder_Cansa')
+            expect(assignment.article.namespace).to eq(Article::Namespaces::MAINSPACE)
+          end
+        end
+      end
+
+      context 'when the assignment is for Wikimedia incubator' do
+        let!(:wikimedia_incubator) { create(:wiki, language: 'incubator', project: 'wikimedia') }
+        let(:wikimedia_params) do
+          { user_id: user.id, course_id: course.slug, title: 'Wp/kiu/Heyder Cansa', role: 0,
+            language: 'incubator', project: 'wikimedia' }
+        end
+
+        before do
+          expect(Article.find_by(title: 'Wp/kiu/Heyder Cansa')).to be_nil
+        end
+
+        it 'imports the article' do
+          VCR.use_cassette 'assignment_import' do
+            expect_any_instance_of(WikiCourseEdits).to receive(:update_assignments)
+            expect_any_instance_of(WikiCourseEdits).to receive(:update_course)
+            put :create, params: wikimedia_params
+            assignment = assigns(:assignment)
+            expect(assignment).to be_a_kind_of(Assignment)
+            expect(assignment.article.title).to eq('Wp/kiu/Heyder_Cansa')
             expect(assignment.article.namespace).to eq(Article::Namespaces::MAINSPACE)
           end
         end
@@ -154,17 +206,21 @@ describe AssignmentsController do
         it 'sets assignments ivar with a default wiki' do
           expect_any_instance_of(WikiCourseEdits).to receive(:update_assignments)
           expect_any_instance_of(WikiCourseEdits).to receive(:update_course)
-          put :create, assignment_params
-          assignment = assigns(:assignment)
-          expect(assignment).to be_a_kind_of(Assignment)
-          expect(assignment.wiki.language).to eq('en')
-          expect(assignment.wiki.project).to eq('wikipedia')
+          VCR.use_cassette 'assignment_import' do
+            put :create, params: assignment_params
+            assignment = assigns(:assignment)
+            expect(assignment).to be_a_kind_of(Assignment)
+            expect(assignment.wiki.language).to eq('en')
+            expect(assignment.wiki.project).to eq('wikipedia')
+          end
         end
 
         it 'renders a json response' do
           expect_any_instance_of(WikiCourseEdits).to receive(:update_assignments)
           expect_any_instance_of(WikiCourseEdits).to receive(:update_course)
-          put :create, assignment_params
+          VCR.use_cassette 'assignment_import' do
+            put :create, params: assignment_params
+          end
           json_response = JSON.parse(response.body)
           # response makes created_at differ by milliseconds, which is weird,
           # so test attrs that actually matter rather than whole record
@@ -187,7 +243,7 @@ describe AssignmentsController do
         it 'sets the wiki based on language and project params' do
           expect_any_instance_of(WikiCourseEdits).to receive(:update_assignments)
           expect_any_instance_of(WikiCourseEdits).to receive(:update_course)
-          put :create, assignment_params_with_language_and_project
+          put :create, params: assignment_params_with_language_and_project
           assignment = assigns(:assignment)
           expect(assignment).to be_a_kind_of(Assignment)
           expect(assignment.wiki_id).to eq(es_wikibooks.id)
@@ -201,7 +257,7 @@ describe AssignmentsController do
         { user_id: user.id + 1, course_id: course.slug, title: 'pizza', role: 0 }
       end
       before do
-        put :create, assignment_params
+        put :create, params: assignment_params
       end
 
       it 'does not create the assignment' do
@@ -219,29 +275,73 @@ describe AssignmentsController do
         { user_id: user.id, course_id: course.slug, title: 'Pikachu', role: 0,
           language: 'en', project: 'bulbapedia' }
       end
-      before do
-        put :create, invalid_wiki_params
+      let(:subject) do
+        put :create, params: invalid_wiki_params
       end
-      it 'renders a 404' do
-        expect(response.status).to eq(404)
+      it 'returns a 404 error message' do
+        expect(subject.body).to have_content('Invalid assignment')
+        expect(subject.status).to eq(404)
+      end
+    end
+
+    context 'when the same assignment already exists' do
+      let(:title) { 'My article' }
+      let!(:assignment) do
+        create(:assignment, course_id: course.id, user_id: user.id, role: 0, article_title: title)
+      end
+      let(:duplicate_assignment_params) do
+        { user_id: user.id, course_id: course.slug, title: title, role: 0 }
+      end
+      before do
+        VCR.use_cassette 'assignment_import' do
+          put :create, params: duplicate_assignment_params
+        end
+      end
+
+      it 'renders an error message with the article title' do
+        expect(response.status).to eq(500)
+        expect(response.body).to include('My_article')
+      end
+    end
+
+    context 'when a case-variant of the assignment already exists' do
+      let(:title) { 'My article' }
+      let(:variant_title) { 'MY ARTICLE' }
+      let!(:assignment) do
+        create(:assignment, course_id: course.id, user_id: user.id, role: 0, article_title: title)
+      end
+      let(:case_variant_assignment_params) do
+        { user_id: user.id, course_id: course.slug, title: variant_title, role: 0 }
+      end
+      before do
+        expect_any_instance_of(WikiCourseEdits).to receive(:update_assignments)
+        expect_any_instance_of(WikiCourseEdits).to receive(:update_course)
+        VCR.use_cassette 'assignment_import' do
+          put :create, params: case_variant_assignment_params
+        end
+      end
+
+      it 'creates the case-variant assignment' do
+        expect(response.status).to eq(200)
+        expect(Assignment.last.article_title).to eq('MY_ARTICLE')
       end
     end
   end
 
-  describe '#update' do
+  describe 'PATCH #update' do
     let(:assignment) { create(:assignment, course_id: course.id, user_id: user.id, role: 0) }
     let(:update_params) { { role: 1 } }
 
     context 'when the update succeeds' do
       it 'renders a 200' do
-        post :update, { id: assignment }.merge(update_params)
+        post :update, params: { course_id: course.id, id: assignment }.merge(update_params), format: :json
         expect(response.status).to eq(200)
       end
     end
     context 'when the update fails' do
       it 'renders a 500' do
         allow_any_instance_of(Assignment).to receive(:save).and_return(false)
-        post :update, { id: assignment }.merge(update_params)
+        post :update, params: { course_id: course.id, id: assignment }.merge(update_params), format: :json
         expect(response.status).to eq(500)
       end
     end

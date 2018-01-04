@@ -1,27 +1,27 @@
 = link_to course_slug_path(course.slug), class: 'course' do
   %span.button.border
-    = t("courses.view_page")
+    = course_i18n('view_page', course)
   .course-title
     = course.title
   .course-details
     .col
       .course-details_title
-        = t("courses.instructors")
+        = course_i18n('instructors', course)
       .course-details_value
         - course.instructors.each do |user|
           = user.username
     .col
       .course-details_title
-        = t("courses.school")
+        = course_i18n('school', course)
       .course-details_value
         = course.school
     .col
       .course-details_title
-        = t("courses.term")
+        = course_i18n('term', course)
       .course-details_value
         = course.term
     .col
       .course-details_title
-        = t("courses.students_count")
+        = course_i18n('students_count', course)
       .course-details_value
         = course.students.length

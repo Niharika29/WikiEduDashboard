@@ -1,7 +1,10 @@
 # frozen_string_literal: true
+
 require 'uri'
 require "#{Rails.root}/lib/assignment_manager"
 require "#{Rails.root}/lib/wiki_course_edits"
+require "#{Rails.root}/app/workers/update_assignments_worker"
+require "#{Rails.root}/app/workers/update_course_worker"
 
 # Controller for Assignments
 class AssignmentsController < ApplicationController
@@ -19,9 +22,9 @@ class AssignmentsController < ApplicationController
     set_assignment { return }
     @course = @assignment.course
     check_permissions(@assignment.user_id)
-    update_onwiki_course_and_assignments
     remove_assignment_template
     @assignment.destroy
+    update_onwiki_course_and_assignments
     render json: { article: @id }
   end
 
@@ -31,14 +34,15 @@ class AssignmentsController < ApplicationController
     set_new_assignment
     update_onwiki_course_and_assignments
     render json: @assignment
+  rescue AssignmentManager::DuplicateAssignmentError => e
+    render json: { errors: e }, status: 500
   end
 
   def update
     check_permissions(assignment_params[:user_id].to_i)
     @assignment = Assignment.find(assignment_params[:id])
-    @assignment.update_attributes(assignment_params)
-    if @assignment.save
-      render json: { assignment: @assignment }, status: 200
+    if @assignment.update_attributes(assignment_params)
+      render partial: 'updated_assignment', locals: { assignment: @assignment }
     else
       render json: { errors: @assignment.errors, message: 'unable to update assignment' },
              status: 500
@@ -48,14 +52,13 @@ class AssignmentsController < ApplicationController
   private
 
   def update_onwiki_course_and_assignments
-    WikiCourseEdits.new(action: :update_assignments, course: @course, current_user: current_user)
-    WikiCourseEdits.new(action: :update_course, course: @course, current_user: current_user)
+    UpdateAssignmentsWorker.schedule_edits(course: @course, editing_user: current_user)
+    UpdateCourseWorker.schedule_edits(course: @course, editing_user: current_user)
   end
 
   def remove_assignment_template
-    WikiCourseEdits.new(action: :remove_assignment,
-                        course: @course,
-                        current_user: current_user,
+    # This is done syncronously because the assignment gets destroyed.
+    WikiCourseEdits.new(action: :remove_assignment, course: @course, current_user: current_user,
                         assignment: @assignment)
   end
 
@@ -89,8 +92,7 @@ class AssignmentsController < ApplicationController
 
   def set_wiki
     find_or_create_wiki
-    return unless @wiki.id.nil?
-    # Error handling for an invalid wiki
+  rescue Wiki::InvalidWikiError
     render json: { message: t('error.invalid_assignment') }, status: 404
     yield
   end
@@ -99,7 +101,7 @@ class AssignmentsController < ApplicationController
     home_wiki = @course.home_wiki
     language = params[:language].present? ? params[:language] : home_wiki.language
     project = params[:project].present? ? params[:project] : home_wiki.project
-    @wiki = Wiki.find_or_create_by(language: language, project: project) || home_wiki
+    @wiki = Wiki.get_or_create(language: language, project: project) || home_wiki
   end
 
   def set_new_assignment
@@ -111,11 +113,10 @@ class AssignmentsController < ApplicationController
   end
 
   def check_permissions(user_id)
-    exception = ActionController::InvalidAuthenticityToken.new('Unauthorized')
-    raise exception unless user_signed_in?
+    require_signed_in
     return if current_user.id == user_id
     return if current_user.can_edit?(@course)
-    raise exception
+    raise NotPermittedError
   end
 
   def assignment_params

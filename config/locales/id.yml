@@ -2,12 +2,21 @@
 # Exported from translatewiki.net
 # Export driver: phpyaml
 # Author: Arief
+# Author: Arifin.wijaya
+# Author: Hidayatsrf
 # Author: Mirws
+# Author: Presidenvolksraad
 # Author: Rachmat.Wahidi
+# Author: Rachmat04
 ---
 id:
   application:
+    cancel: Batal
+    dashboard: Papan Utama Wiki Ed
+    error: 'Terjadi kesalahan:'
     explore: Jelajah
+    field_required: Bidang ini perlu diisi
+    field_invalid_characters: Ada karakter tidak sah di bidang ini
     help: Bantuan
     log_in: Masuk
     log_out: Keluar
@@ -25,6 +34,7 @@ id:
     log_in: Masuk dengan Wikipedia
     sign_up: Masuk dengan Wikipedia
   articles:
+    edited_by: 'Disunting oleh:'
     loading: Memuat artikel...
     rating_docs:
       start: Mulai kelas - artikel awal dengan banyak ruang untuk perbaikan
@@ -33,13 +43,15 @@ id:
     loading: Memuat tugas...
     reviewers: Peninjau
   courses:
-    course_description: Wiki Ed Courses
+    course_description: Kursus
+    needs_update: Jadwal Pembaruan Data
     word_count_doc: Perkiraan jumlah kata ditambahkan ke artikel mainspace oleh siswa
       kursus selama jangka kursus
   courses_generic:
     courses: Program
     creator:
       checking_for_uniqueness: Keunikan program akan diperiksa.
+    view_other: Lihat kampanye lain
   metrics:
     word_count: Kata ditambahkan
   revisions:
@@ -60,8 +72,10 @@ id:
     revision_characters_and_views: 'Karakter ditambahkan: %{characters}, Dilihat:
       %{views}'
     training_complete:
-      one: has completed training
-      other: have completed training
+      one: telah diperbarui dengan pelatihan
+      other: telah diperbarui dengan pelatihan
+  user_profiles:
+    institution_placeholder: Nama institusi (opsional)
   wizard:
     assignment_description: Pilih tanggal mulai dan akhir untuk waktu tugas Anda.
       Sebagai contoh, jika Anda ingin memulai proyek Wikipedia Anda minggu kedua kelas,

@@ -7,7 +7,7 @@ Rails.application.config.to_prepare do
   Rapidfire::QuestionGroup.class_eval do
     has_paper_trail
     has_many :question_group_conditionals, foreign_key: 'rapidfire_question_group_id'
-    has_many :cohorts, through: :question_group_conditionals
+    has_many :campaigns, through: :question_group_conditionals
     has_and_belongs_to_many :surveys, join_table: 'surveys_question_groups', foreign_key: 'rapidfire_question_group_id'
   end
 
@@ -83,7 +83,7 @@ Rails.application.config.to_prepare do
 
     def question_group_params
       join_tags
-      params.require(:question_group).permit(:name, :tags, cohort_ids: [])
+      params.require(:question_group).permit(:name, :tags, campaign_ids: [])
     end
 
     def join_tags
@@ -92,13 +92,14 @@ Rails.application.config.to_prepare do
     end
 
     def set_tags
-      @available_tags = Tag.uniq.pluck(:tag)
+      @available_tags = Tag.distinct.pluck(:tag)
     end
   end
 
   Rapidfire::Question.class_eval do
     has_paper_trail
     scope :course_data_questions, ->{where("course_data_type <> ''")}
+    serialize :alert_conditions, Hash
 
     def self.for_conditionals
       where("conditionals IS NULL OR conditionals = ''")
@@ -154,7 +155,13 @@ Rails.application.config.to_prepare do
 
   Rapidfire::AnswerGroupsController.class_eval do
     include SurveysHelper
-    before_action :set_course_for_question_group, only: [:new]
+    before_action :set_course, only: [:new, :create]
+    after_action :add_course_to_answer_group, only: [:create]
+
+    def add_course_to_answer_group
+      answer_group = @answer_group_builder.to_model
+      answer_group.update_attribute(:course_id, @course&.id)
+    end
   end
 
   Rapidfire::QuestionForm.class_eval do

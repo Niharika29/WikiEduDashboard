@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #= Utilities for calcuating statistics by month, and year-over-year
 class MonthlyReport
   def self.run(opts={})
@@ -82,7 +83,7 @@ class MonthlyReport
   def article_count(revisions)
     article_ids = revisions.pluck(:article_id)
     articles = Article.where(id: article_ids, namespace: 0, deleted: false)
-    articles.uniq.count
+    articles.distinct.count
   end
 
   def student_ids_for(courses)

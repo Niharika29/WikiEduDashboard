@@ -2,26 +2,33 @@ ENV['dashboard_url'] = 'dashboard.wikiedu.org'
 ENV['default_course_type'] = 'ClassroomProgramCourse'
 ENV['open_course_creation'] = 'false'
 ENV['disable_wiki_output'] = 'false'
+ENV['open_course_creation'] = 'false'
 ENV['course_prefix'] = 'Wikipedia:Wiki_Ed'
 ENV['wiki_language'] = 'en'
 ENV['enable_article_finder'] = 'true'
-ENV['oauth_ids'] = '252,212'
+ENV['oauth_ids'] = '252,212,542'
 ENV['training_page_id'] = '36892501'
-ENV['default_cohort'] = 'spring_2015'
-ENV['cohorts'] = 'fall_2014,spring_2015'
-ENV['cohort_fall_2014'] = 'Wikipedia:Education_program/Dashboard/Fall_2014_course_ids'
-ENV['cohort_spring_2015'] = 'Wikipedia:Education_program/Dashboard/course_ids'
-ENV['sentry_dsn'] = 'http://somelongkey:anotherlongkey@sentry.myserver.com/1'
-ENV['sentry_public_dsn'] = 'http://anotherlongkey@sentry.myserver.com/1'
+ENV['training_path'] = 'training_content/wiki_ed'
+ENV['default_campaign'] = 'spring_2015'
+ENV['campaigns'] = 'fall_2014,spring_2015'
+ENV['campaign_fall_2014'] = 'Wikipedia:Education_program/Dashboard/Fall_2014_course_ids'
+ENV['campaign_spring_2015'] = 'Wikipedia:Education_program/Dashboard/course_ids'
+ENV['sentry_dsn'] = 'dummy://12345:67890@sentry.localdomain/sentry/42'
+ENV['sentry_public_dsn'] = 'http://anotherlongkey@sentry.example.com/1'
 ENV['no_views'] = 'false'
 ENV['disable_onboarding'] = 'false'
-ENV['disable_training'] = 'false'
 #ENV['hot_loading'] = 'false'
 ENV['SENDER_EMAIL_ADDRESS'] = 'root@localhost'
 ENV['enable_legacy_courses'] = 'true'
 ENV['enable_get_help_button'] = 'true'
 ENV['enable_language_switcher'] = 'true'
 ENV['training_path'] = 'training_content/wiki_ed'
+ENV['enable_chat'] = 'true'
+ENV['chat_admin_username'] = 'username'
+ENV['chat_admin_password'] = 'password'
+ENV['chat_server'] = 'https://dashboardchat.wmflabs.org'
+ENV['SF_SERVER'] = 'https://cs54.salesforce.com/'
+ENV['edit_en.wikipedia.org'] = 'true'
 
 Rails.application.configure do
   # Settings specified here will take
@@ -33,16 +40,14 @@ Rails.application.configure do
   # and recreated between test runs. Don't rely on the data there!
   config.cache_classes = true
 
-  config.active_record.raise_in_transactional_callbacks = true
-
   # Do not eager load code on boot. This avoids loading your whole application
   # just for the purpose of running a single test. If you are using a tool that
   # preloads Rails for running tests, you may have to set it to true.
   config.eager_load = false
 
   # Configure static asset server for tests with Cache-Control for performance.
-  config.serve_static_files  = true
-  config.static_cache_control = 'public, max-age=3600'
+  config.public_file_server.enabled = true
+  config.public_file_server.headers = { 'Cache-Control' => 'public, max-age=3600' }
 
   # Show full error reports and disable caching.
   config.consider_all_requests_local       = true
@@ -64,7 +69,7 @@ Rails.application.configure do
   config.active_support.deprecation = :stderr
 
   # Raises error for missing translations
-  # config.action_view.raise_on_missing_translations = true
+  config.action_view.raise_on_missing_translations = true
 
   config.allow_concurrency = false
   config.assets.debug = true
